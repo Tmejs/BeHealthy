@@ -1,4 +1,4 @@
-import React, { Component } from 'react';
+import React, {Component} from 'react';
 import {
     Alert,
     StyleSheet,
@@ -7,36 +7,32 @@ import {
     TextInput,
     View, Button
 } from 'react-native';
-import MapView,{PROVIDER_GOOGLE} from 'react-native-maps'; // 0.21.0
+import MapView, {PROVIDER_GOOGLE} from 'react-native-maps'; // 0.21.0
+import MapViewDirections from 'react-native-maps-directions';
+
+let id = 0;
+
 
 export default class MapScreen extends Component {
     state = {
         mapRegion: null,
-        lastLat: null,
-        lastLong: null,
-        startMarker: null,
-        endMarker: null,
-    }
+        markers: [],
+        startMarkerSet: false,
+        endMarkerSet: false,
+        distance: 0,
+    };
 
-    renderCallout(marker) {
-        return (
-            <MapView.Callout tooltip>
-                <View>
-                    <Text>Marker</Text>
-                </View>
-            </MapView.Callout>
-        );
-    }
 
     componentDidMount() {
         this.watchID = navigator.geolocation.watchPosition((position) => {
             // Create the object to update this.state.mapRegion through the onRegionChange function
             let region = {
-                latitude:       position.coords.latitude,
-                longitude:      position.coords.longitude,
-                latitudeDelta:  0.00922*1.5,
-                longitudeDelta: 0.00421*1.5
+                latitude: position.coords.latitude,
+                longitude: position.coords.longitude,
+                latitudeDelta: 0.00922 * 1.5,
+                longitudeDelta: 0.00421 * 1.5
             }
+
             this.onRegionChange(region, region.latitude, region.longitude);
         });
     }
@@ -55,138 +51,247 @@ export default class MapScreen extends Component {
     }
 
 
-    async getDirections(startLoc, destinationLoc) {
-        try {
-            let resp = await fetch(`https://maps.googleapis.com/maps/api/directions/json?origin=${ startLoc }&destination=${ destinationLoc }`)
-            let respJson = await resp.json();
-            let points = Polyline.decode(respJson.routes[0].overview_polyline.points);
-            let coords = points.map((point, index) => {
-                return  {
-                    latitude : point[0],
-                    longitude : point[1]
-                }
-            })
-            this.setState({coords: coords})
-            return coords
-        } catch(error) {
-            return error
-        }
-    }
-
-    clearStartMarker(){
-        setState({
-            startMarker: null,
-        });
-    }
-    addEndMarker(e){
-        let region = {
-            latitude:       e.nativeEvent.coordinate.latitude,
-            longitude:      e.nativeEvent.coordinate.longitude,
-            latitudeDelta:  0.00922*1.5,
-            longitudeDelta: 0.00421*1.5
-        }
-
-        let marker = {
-            title:'EndMarker',
-            latitude:       e.nativeEvent.coordinate.latitude,
-            longitude:      e.nativeEvent.coordinate.longitude,
-        };
-
+    addMidPoint(e) {
         this.setState({
-            endMarker: marker,
+            markers: [
+                ...this.state.markers,
+                {
+                    coordinate: e.nativeEvent.coordinate,
+                    key: `foo${id++}`,
+                },
+
+            ],
         });
     }
 
-    addStartMarker(e){
-        let region = {
-            latitude:       e.nativeEvent.coordinate.latitude,
-            longitude:      e.nativeEvent.coordinate.longitude,
-            latitudeDelta:  0.00922*1.5,
-            longitudeDelta: 0.00421*1.5
-        }
-
-        let marker = {
-            title:'StartMarker',
-            latitude:       e.nativeEvent.coordinate.latitude,
-            longitude:      e.nativeEvent.coordinate.longitude,
-        };
+    addStartMarker(e) {
         this.setState({
-            startMarker: marker,
+            markers: [
+                {
+                    coordinate: e.nativeEvent.coordinate,
+                    key: `foo${id++}`,
+                },
+                {
+                    coordinate: e.nativeEvent.coordinate,
+                    key: `foo${id++}`,
+                },
+            ],
+            startMarkerSet: true,
         });
     }
 
-    addMidMarker(e){
-        let region = {
-            latitude:       e.nativeEvent.coordinate.latitude,
-            longitude:      e.nativeEvent.coordinate.longitude,
-            latitudeDelta:  0.00922*1.5,
-            longitudeDelta: 0.00421*1.5
-        }
 
-        let marker = {
-            title:'MidMarker',
-            latitude:       e.nativeEvent.coordinate.latitude,
-            longitude:      e.nativeEvent.coordinate.longitude,
-        };
+    addEndMarker(e) {
+        this.setState({
+            markers: [
+                this.state.markers[0],
+                {
+                    coordinate: e.nativeEvent.coordinate,
+                    key: `foo${id++}`,
+                },
+
+            ],
+            endMarkerSet: true,
+        });
     }
+
+
+    deleteMarker(marker) {
+
+
+    }
+
 
     onMapPress(e) {
-        Alert.alert(
-            'Wybierz punkt',
-            '',
-            [
-                {text: 'Punkt poczatkowy', onPress: this.addStartMarker(e)},
-                {text: 'Punkt koncowy', onPress: this.addEndMarker(e)},
-                {text: 'Punkt posredni', onPress: this.addMidMarker(e)},
-                {text: 'Anuluj',onPress:()=>{},style: 'cancel'},
-            ],
-            { cancelable: true }
-        );
+        e.persist();
+
+        if (!this.state.startMarkerSet) {
+            Alert.alert(
+                'Wybierz punkt',
+                '',
+                [
+                    {
+                        text: 'Punkt poczatkowy', onPress: () => {
+                            this.addStartMarker(e)
+                        }
+                    },
+                    {
+                        text: 'Anuluj', onPress: () => {
+                        }, style: 'cancel'
+                    },
+                ],
+                {cancelable: true}
+            );
+        }
+        else if (!this.state.endMarkerSet) {
+            Alert.alert(
+                'Wybierz punkt',
+                '',
+                [
+                    {
+                        text: 'Punkt koncowy', onPress: () => {
+                            this.addEndMarker(e)
+                        }
+                    },
+                    {
+                        text: 'Anuluj', onPress: () => {
+                        }, style: 'cancel'
+                    },
+                ],
+                {cancelable: true}
+            );
+        }
+        else if (this.state.endMarkerSet && this.state.startMarkerSet) {
+            Alert.alert(
+                'Wybierz punkt',
+                '',
+                [
+                    {
+                        text: 'Punkt przez', onPress: () => {
+                            this.addMidPoint(e)
+                        }
+                    },
+                    {
+                        text: 'Anuluj', onPress: () => {
+                        }, style: 'cancel'
+                    },
+                ],
+                {cancelable: true}
+            );
+        }
+
     }
 
 
+    deleteMarkers() {
+        this.setState({
+            markers: [],
+            startMarkerSet: false,
+            endMarkerSet: false,
+        });
+    }
+
+
+    // findRoute(){
+    //     let startPoint = this.state.markers[0];
+    //     let endPoint=this.state.markers[1];
+    //
+    //
+    //     .get(
+    //         {
+    //             origin: startPoint.latitude.toString()+","+startPoint.longitude.toString(),
+    //             destination: endPoint.latitude.toString()+","+endPoint.longitude.toString(),
+    //         },
+    //         function(err, data) {
+    //             if (err) return console.log(err);
+    //             console.log(data);
+    //         });
+    //
+    //     // let url = `https://maps.googleapis.com/maps/api/directions/json?origin=${startPoint}&destination=${endPoint}&key=AIzaSyAZJdq8qUnEZu1lNJzCnULREHlEtKcBmUs&mode=walking`;
+    //     //
+    //     //
+    //     // fetch(url)
+    //     //     .then(response => response.json())
+    //     //     .then(responseJson => {
+    //     //
+    //     //         if (responseJson.routes.length) {
+    //     //             this.setState({
+    //     //                 coords: this.decode(responseJson.routes[0].overview_polyline.points) // definition below
+    //     //             });
+    //     //         }
+    //     //     }).catch(e => {console.warn(e)});
+    //
+    // }
+
+    getLnGt(marker) {
+        return {
+            latitude: marker.coordinate.latitude,
+            longitude: marker.coordinate.longitude
+        };
+    }
+
+    getLnGtFromWaypoint(markers) {
+        let list = [];
+
+        if (markers.length > 2) {
+            for (var i = 2; i < markers.length; i++) {
+                list.push(this.getLnGt(markers[i]));
+            }
+        }
+        if (list.length > 0)
+            return list;
+        else
+            return null;
+    }
+
+
+    setDistance(value) {
+        this.setState({
+            distance: value
+        })
+    }
+
+    getCalories() {
+        fetch('localhost:8080', {
+            method: 'POST',
+            headers: {
+                Accept: 'application/json',
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                origin: this.getLnGt(this.state.markers[0]),
+                destination: this.getLnGt(this.state.markers[1]),
+                waypoints: this.getLnGtFromWaypoint(this.state.markers),
+                mode: 'walking'
+            })
+        });
+    }
+
     render() {
+        const path = this.state.endMarkerSet ? (
+            <MapViewDirections
+                origin={this.getLnGt(this.state.markers[0])}
+                destination={this.getLnGt(this.state.markers[1])}
+                waypoints={this.getLnGtFromWaypoint(this.state.markers)}
+                apikey='AIzaSyAZJdq8qUnEZu1lNJzCnULREHlEtKcBmUs'
+                mode='walking'
+            >
+            </MapViewDirections>
+        ) : (null);
+
+        let calories;
+
+        if (path != null) {
+            calories=this.getCalories();
+        }
+
         return (
             <View style={{flex: 1}}>
                 <MapView
                     style={styles.map}
                     region={this.state.mapRegion}
-                    provider ={PROVIDER_GOOGLE}
+                    provider={PROVIDER_GOOGLE}
                     showsUserLocation={true}
                     followUserLocation={true}
-                    onRegionChange={this.onRegionChange.bind(this)}
                     onLongPress={this.onMapPress.bind(this)}>
-                    {/*Markerk poczatku trasy*/}exp
-                    renderIf({this.state.startMarker!=null}){
+                    {this.state.markers.map(marker => (
                         <MapView.Marker
-                            coordinate = {this.state.startMarker}
-                            title='Start'
+                            key={marker.key}
+                            coordinate={marker.coordinate}
+                            draggable
                         >
                             <MapView.Callout>
-                                <Text
-                                    onPress={this.clearStartMarker}
-                                    title='Usuń punkt początkowy'
-                                >Usuń punkt początkowy
+                                <Text onPress={this.deleteMarker(marker)}>
+                                    Usun marker
                                 </Text>
                             </MapView.Callout>
                         </MapView.Marker>
-                    }
+                    ))}
 
-                    {/*MarkerKoncaTrasy*/}
-                    renderIf({this.state.endMarker!=null}){
-                    <MapView.Marker
-                        coordinate = {this.state.endMarker}
-                        title='Start'
-                    >
-                        <MapView.Callout>
-                            <Text
-                                onPress={this.clearStartMarker}
-                                title='Usuń punkt Końcowy'
-                            >Usuń punkt początkowy
-                            </Text>
-                        </MapView.Callout>
-                    </MapView.Marker>
-                }
+                    <Button title='Wyczyść mapę' onPress={this.deleteMarkers.bind(this)}/>
+                    {/*<Button style ="abut"  title='Wyznacz trasę' onPress={} align='bottom'/>*/}
+                    {path}
+                    <Text>Kalorie: {calories}</Text>
                 </MapView>
             </View>
         );
@@ -197,23 +302,7 @@ const styles = StyleSheet.create({
     map: {
         ...StyleSheet.absoluteFillObject,
     },
-    inputView: {
-        backgroundColor: 'rgba(0,0,0,0)',
-        position: 'absolute',
-        top: 0,
-        left: 5,
-        right: 5
-    },
-    input: {
-        height: 36,
-        padding: 10,
-        marginTop: 20,
-        marginLeft: 10,
-        marginRight: 10,
-        fontSize: 18,
-        borderWidth: 1,
-        borderRadius: 10,
-        borderColor: '#48BBEC',
-        backgroundColor: 'white',
+    abut: {
+        flex: 1,
     }
 });
