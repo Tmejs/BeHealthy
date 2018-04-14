@@ -1,4 +1,5 @@
 from http.server import BaseHTTPRequestHandler, HTTPServer
+from calories_counter import calories_burned
 import json
 
 class Server(BaseHTTPRequestHandler):
@@ -20,6 +21,14 @@ class Server(BaseHTTPRequestHandler):
         response = "Zwrotka"
         try:
             json_data = json.loads(post_data.decode())
+            if json_data['query'] == 'calories':
+                response = str(calories_burned(json_data['uphill'],
+                                               json_data['distance'],
+                                               json_data['time'],
+                                               json_data['activity'],
+                                               json_data['weight']))
+            else:
+                response = "Zle zapytanie"
             print(json.dumps(json_data))
         except json.decoder.JSONDecodeError:
             response = "Blad konwersji JSON"

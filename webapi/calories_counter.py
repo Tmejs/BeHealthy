@@ -46,10 +46,10 @@ def uphill_grade(length, uphill):
     return 100 * uphill / length
 
 
-def calories_burned(uphill_in_km, length_in_km, time_in_h, activity, weight_in_kg):
+def calories_burned(uphill_in_km, distance_in_km, time_in_h, activity, weight_in_kg):
     calories, down_met, up_met = 0, 0, 0
-    up_grade = uphill_grade(length_in_km, uphill_in_km)
-    speed = length_in_km / time_in_h
+    up_grade = uphill_grade(distance_in_km, uphill_in_km)
+    speed = distance_in_km / time_in_h
 
     if activity == "walking":
         down_met, up_met = walking_MET(up_grade)
@@ -61,6 +61,3 @@ def calories_burned(uphill_in_km, length_in_km, time_in_h, activity, weight_in_k
     calories += down_met * (1 - UPHILL_TIME_OVER_DOWNHILL_TIME) * weight_in_kg * time_in_h
 
     return calories
-
-
-print(calories_burned(0.0, 3.5, 0.5, "running", 80))
