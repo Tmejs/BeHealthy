@@ -1,8 +1,15 @@
 from http.server import BaseHTTPRequestHandler, HTTPServer
 from calories_counter import calories_burned
+from google_api_agent import GoogleApiAgent
 import json
 
+
 class Server(BaseHTTPRequestHandler):
+    def __init__(self, request, client_address, server):
+        self.googleAgent = GoogleApiAgent()
+        super().__init__(request, client_address, server)
+
+
     def _set_headers(self):
         self.send_response(200)
         self.send_header('Content-type', 'text/html')
@@ -22,20 +29,29 @@ class Server(BaseHTTPRequestHandler):
         try:
             print(post_data.decode())
             json_data = json.loads(post_data.decode())
-            if json_data['query'] == 'calories':
-                response = str(calories_burned(json_data['uphill'],
-                                               json_data['distance'],
-                                               json_data['time'],
-                                               json_data['activity'],
-                                               json_data['weight']))
-            else:
-                response = "Zle zapytanie"
-            print(json.dumps(json_data))
+            distance, time = self.googleAgent.get_distance_and_time(json_data)
+            elevation = self.googleAgent.get_elevation(json_data, distance)
+
+            elevationArray = []
+
+            for resultset in elevation:
+                elevationArray.append(resultset['elevation'])
+
+            uphill, downhill = self.googleAgent.get_uphill_and_downhill(elevationArray)
+
+            chartURL = self.googleAgent.getChart(chartData=elevationArray)
+
+            calories = calories_burned(uphill_in_km=uphill, distance_in_km=distance, time_in_h=time,
+                                       activity=json_data['mode'], weight_in_kg=80)
+
+            response = {"calories": calories, "chart": chartURL, "time": time}
+
         except json.decoder.JSONDecodeError:
             response = "Blad konwersji JSON"
 
+        print(response)
         self._set_headers()
-        self.wfile.write(str.encode(response + '\n'))
+        self.wfile.write(str.encode(json.dumps(response) + '\n'))
 
 
 def run(server_class=HTTPServer, handler_class=Server, port=80):
