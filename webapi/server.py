@@ -1,5 +1,5 @@
 from http.server import BaseHTTPRequestHandler, HTTPServer
-from calories_counter import calories_burned
+
 from google_api_agent import GoogleApiAgent
 import json
 
@@ -8,7 +8,6 @@ class Server(BaseHTTPRequestHandler):
     def __init__(self, request, client_address, server):
         self.googleAgent = GoogleApiAgent()
         super().__init__(request, client_address, server)
-
 
     def _set_headers(self):
         self.send_response(200)
@@ -28,23 +27,16 @@ class Server(BaseHTTPRequestHandler):
         response = "Zwrotka"
         try:
             print(post_data.decode())
+
             json_data = json.loads(post_data.decode())
-            distance, time = self.googleAgent.get_distance_and_time(json_data)
-            elevation = self.googleAgent.get_elevation(json_data, distance)
 
-            elevationArray = []
+            if json_data['query'] == 'calories':
+                response = self.googleAgent.get_path_info(json_data)
 
-            for resultset in elevation:
-                elevationArray.append(resultset['elevation'])
-
-            uphill, downhill = self.googleAgent.get_uphill_and_downhill(elevationArray)
-
-            chartURL = self.googleAgent.getChart(chartData=elevationArray)
-
-            calories = calories_burned(uphill_in_km=uphill, distance_in_km=distance, time_in_h=time,
-                                       activity=json_data['mode'], weight_in_kg=80)
-
-            response = {"calories": calories, "chart": chartURL, "time": time, "distance":distance}
+            elif json_data['query'] == 'paths':
+                response = self.googleAgent.get_generated_paths(json_data)
+                print(self.googleAgent.getGoogleMapsUrl(response[0]['path']))
+                print(self.googleAgent.getGoogleMapsUrl(response[1]['path']))
 
         except json.decoder.JSONDecodeError:
             response = "Blad konwersji JSON"
