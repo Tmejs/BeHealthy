@@ -25,8 +25,8 @@ export default class HomeScreen extends React.Component {
             <Image
               source={
                 __DEV__
-                  ? require('../assets/images/WayToLogo.png')
-                  : require('../assets/images/WayToLogo.png')
+                  ? require('../assets/images/waytologo.png')
+                  : require('../assets/images/waytologo.png')
               }
               style={styles.welcomeImage}
             />

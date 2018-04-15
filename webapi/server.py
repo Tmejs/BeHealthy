@@ -27,6 +27,7 @@ class Server(BaseHTTPRequestHandler):
         post_data = self.rfile.read(content_length)  # <--- Gets the data itself
         response = "Zwrotka"
         try:
+            print(post_data.decode())
             json_data = json.loads(post_data.decode())
             distance = self.googleAgent.get_distance(json_data)
             elevation = self.googleAgent.get_elevation(json_data, distance)

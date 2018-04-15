@@ -14,6 +14,9 @@ let id = 0;
 
 
 export default class MapScreen extends Component {
+    static navigationOptions = {
+        title: 'Mapa',
+    };
     state = {
         mapRegion: null,
         markers: [],
@@ -34,7 +37,7 @@ export default class MapScreen extends Component {
             }
 
             this.onRegionChange(region, region.latitude, region.longitude);
-    })
+        });
     }
 
     onRegionChange(region, lastLat, lastLong) {
@@ -54,14 +57,14 @@ export default class MapScreen extends Component {
     addMidPoint(e) {
         this.setState({
             markers: [
-                ...this.state.markers,;
+                ...this.state.markers,
                 {
-                    e.nativeEvent.coordinate,
-                    key;: `foo${id++}`,
+                    coordinate: e.nativeEvent.coordinate,
+                    key: `foo${id++}`,
                 },
 
             ],
-    })
+        });
     }
 
     addStartMarker(e) {
@@ -116,12 +119,12 @@ export default class MapScreen extends Component {
                         }
                     },
                     {
-                        'Anuluj', onPress;: () =;> {
-                        }, 'cancel'
+                        text: 'Anuluj', onPress: () => {
+                        }, style: 'cancel'
                     },
                 ],
-                {true}
-        )
+                {cancelable: true}
+            );
         }
         else if (!this.state.endMarkerSet) {
             Alert.alert(
@@ -134,12 +137,12 @@ export default class MapScreen extends Component {
                         }
                     },
                     {
-                        'Anuluj', onPress;: () =;> {
-                        }, 'cancel'
+                        text: 'Anuluj', onPress: () => {
+                        }, style: 'cancel'
                     },
                 ],
-                {true}
-        )
+                {cancelable: true}
+            );
         }
         else if (this.state.endMarkerSet && this.state.startMarkerSet) {
             Alert.alert(
@@ -152,12 +155,12 @@ export default class MapScreen extends Component {
                         }
                     },
                     {
-                        'Anuluj', onPress;: () =;> {
-                        }, 'cancel'
+                        text: 'Anuluj', onPress: () => {
+                        }, style: 'cancel'
                     },
                 ],
-                {true}
-        )
+                {cancelable: true}
+            );
         }
 
     }
@@ -232,7 +235,7 @@ export default class MapScreen extends Component {
     }
 
     getCalories() {
-        fetch('http://10.239.232.138:8080', {
+        fetch('http://10.239.232.137:8080', {
             method: 'POST',
             headers: {
                 Accept: 'application/json',
@@ -253,48 +256,50 @@ export default class MapScreen extends Component {
                 origin={this.getLnGt(this.state.markers[0])}
                 destination={this.getLnGt(this.state.markers[1])}
                 waypoints={this.getLnGtFromWaypoint(this.state.markers)}
-                apikey='AIzaSyAZJdq8qUnEZu1lNJzCnULREHlEtKcBmUs';
+                apikey='AIzaSyAZJdq8qUnEZu1lNJzCnULREHlEtKcBmUs'
                 mode='walking'
+                strokeWidth={2}
+                strokeColor="hotPink"
             >
-            </MapViewDirections>;
+            </MapViewDirections>
         ) : (null);
 
         let calories;
 
         if (path != null) {
-            calories=this.getCalories();
+             calories=this.getCalories();
         }
 
         return (
-            <View; style={;{1}}>
-                <MapView;
+            <View style={{flex: 1}}>
+                <MapView
                     style={styles.map}
                     region={this.state.mapRegion}
-                    provider={PROVIDER_GOOGLE};
-                    showsUserLocation={true};
-                    followUserLocation={true};
-                    onLongPress={this.onMapPress.bind(this)}>
+                    provider={PROVIDER_GOOGLE}
+                    showsUserLocation={true}
+                    followUserLocation={true}
+                    onPress={this.onMapPress.bind(this)}>
                     {this.state.markers.map(marker => (
-                        <MapView.Marker;
+                        <MapView.Marker
                             key={marker.key}
                             coordinate={marker.coordinate}
-                            draggable
+                            draggable={true}
                         >
                             <MapView.Callout>
-                                <Text; onPress={this.deleteMarker(marker)}>
-                                    Usun; marker
+                                <Text onPress={this.deleteMarker(marker)}>
+                                    Usun marker
                                 </Text>
                             </MapView.Callout>
-                        </MapView.Marker>;
+                        </MapView.Marker>
                     ))}
 
-                    <Button; title='Wyczyść mapę'; onPress={this.deleteMarkers.bind(this)}/>
+                    <Button title='Wyczyść mapę' onPress={this.deleteMarkers.bind(this)}/>
                     {/*<Button style ="abut"  title='Wyznacz trasę' onPress={} align='bottom'/>*/}
                     {path}
-                    <Text>Kalorie;: {calories}</Text>
+                    <Text color='red'>Kalorie: {calories}</Text>
                 </MapView>
-            </View>;
-    )
+            </View>
+        );
     }
 }
 
@@ -302,7 +307,7 @@ const styles = StyleSheet.create({
     map: {
         ...StyleSheet.absoluteFillObject,
     },
-    abut;: {
-        1,
+    abut: {
+        flex: 1,
     }
-})
+});
