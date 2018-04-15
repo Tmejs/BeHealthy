@@ -4,11 +4,14 @@ import {
     StyleSheet,
     Text,
     Callout,
-    View, Button,Modal,Image
+    View, Button, Modal, Image,AsyncStorage
+
 } from 'react-native';
 import MapView, {PROVIDER_GOOGLE} from 'react-native-maps'; // 0.21.0
 import MapViewDirections from 'react-native-maps-directions';
-import ImagePreview from 'react-native-image-preview';
+import '../global.js';
+import Lightbox from 'react-native-lightbox';
+
 
 let id = 0;
 
@@ -17,6 +20,8 @@ export default class MapScreen extends Component {
     static navigationOptions = {
         title: 'Mapa',
     };
+
+
     state = {
         mapRegion: null,
         markers: [],
@@ -28,7 +33,7 @@ export default class MapScreen extends Component {
         downloaded: false,
         modalVisible: false,
         chartPath: null,
-        imagePredictVisible:false,
+        imagePredictVisible: false,
     };
 
 
@@ -70,6 +75,8 @@ export default class MapScreen extends Component {
                 },
 
             ],
+
+            downloaded: false,
         });
     }
 
@@ -86,6 +93,7 @@ export default class MapScreen extends Component {
                 },
             ],
             startMarkerSet: true,
+            downloaded: false,
         });
     }
 
@@ -101,13 +109,13 @@ export default class MapScreen extends Component {
 
             ],
             endMarkerSet: true,
+            downloaded: false,
         });
     }
 
 
     onMapPress(e) {
         e.persist();
-
         if (!this.state.startMarkerSet) {
             Alert.alert(
                 'Wybierz punkt',
@@ -207,7 +215,12 @@ export default class MapScreen extends Component {
         })
     }
 
-    getCalories() {
+    async getCalories() {
+
+        this.setState({
+            downloaded: true,
+        });
+
         fetch('http://10.239.232.137:8080', {
             method: 'POST',
             headers: {
@@ -215,10 +228,17 @@ export default class MapScreen extends Component {
                 'Content-Type': 'application/json',
             },
             body: JSON.stringify({
+                query: 'calories',
                 origin: this.getLnGt(this.state.markers[0]),
                 destination: this.getLnGt(this.state.markers[1]),
                 waypoints: this.getLnGtFromWaypoint(this.state.markers),
-                mode: 'walking'
+                mode: 'walking',
+                osoba: {
+                    sex: "M",
+                    weight: 80,
+                    age: 35,
+                    activity: 'Bieg',
+                },
             })
         }).then((response) => response.json())
             .then((responseJson) => {
@@ -228,7 +248,6 @@ export default class MapScreen extends Component {
                     distance: responseJson.distance,
                     chartPath: responseJson.chart,
                 })
-
             })
             .catch((error) => {
                 console.error(error);
@@ -241,10 +260,14 @@ export default class MapScreen extends Component {
         console.log(e);
     }
 
-    onRegionChange(newRegion) {
-        this.setState({
-            mapRegion: newRegion
-        });
+    // onRegionChange(newRegion) {
+    //     this.setState({
+    //         mapRegion: newRegion
+    //     });
+    // }
+
+    handleSomething() {
+        this.getCalories();
     }
 
     render() {
@@ -257,51 +280,64 @@ export default class MapScreen extends Component {
                 mode='walking'
                 strokeWidth={2}
                 strokeColor="hotPink"
+
             >
             </MapViewDirections>
         ) : (null);
 
 
-
         const chart = this.state.chartPath ? (
-            <ImagePreview visible={this.state.imagePredictVisible} source={this.state.chartPath} close={this.setState({imagePredictVisible :false})} />
+            <Lightbox>
+                <Image
+                    style={{
+                        flexDirection:'row',
+                        resizeMode:'stretch',
+                        height: 150,
+                    width:null}}
+                    source={{ uri: this.state.chartPath}}
+                />
+            </Lightbox>
         ) : (null);
 
         if (path != null) {
             if (!this.state.downloaded) {
                 this.getCalories();
-                this.setState({
-                    downloaded: true,
-                })
             }
         }
 
         return (
             <View style={{flex: 1}}>
-                    <MapView
-                        style={styles.map}
-                        region={this.state.mapRegion}
-                        // onRegionChange={this.onRegionChange.bind(this)}
-                        provider={PROVIDER_GOOGLE}
-                        showsUserLocation={true}
-                        onLongPress={this.onMapPress.bind(this)}>
-                        {this.state.markers.map(marker => (
-                            <MapView.Marker
-                                key={marker.key}
-                                coordinate={marker.coordinate}
-                            >
-                            </MapView.Marker>
-                        ))}
+                <MapView
+                    style={styles.map}
+                    region={this.state.mapRegion}
+                    // onRegionChange={this.onRegionChange.bind(this)}
+                    provider={PROVIDER_GOOGLE}
+                    showsUserLocation={true}
+                    onLongPress={(e) => this.onMapPress(e)}>
+                    {this.state.markers.map(marker => (
+                        <MapView.Marker
+                            key={marker.key}
+                            coordinate={marker.coordinate}
+                        >
+                        </MapView.Marker>
+                    ))}
 
-                        <Button title='Wyczyść mapę' onPress={this.deleteMarkers.bind(this)}/>
-                        {/*<Button style ="abut"  title='Wyznacz trasę' onPress={} align='bottom'/>*/}
-                        {path}
+
+                    {/*<Button style ="abut"  title='Wyznacz trasę' onPress={} align='bottom'/>*/}
+                    {path}
+
+                </MapView>
+                <View flex="end">
+                    <View style={{backgroundColor: 'white'}}>
                         <Text color='red'>Kalorie: {this.state.calories}</Text>
-                        <Text color='red'>Czas (minuty): {Math.round(this.state.time * 60)}</Text>
-                        <Text color='red'>Odległośc (metry): {this.state.distance}</Text>
+                        <Text color='red'>Czas ( minuty ): {Math.round(this.state.time * 60)}</Text>
+                        <Text color='red'>Odległośc ( km ): {this.state.distance}</Text>
                         {chart}
-                    </MapView>
-
+                    </View>
+                    <View>
+                        <Button title='Wyczyść mapę' color="#841584" onPress={() => this.deleteMarkers()}/>
+                    </View>
+                </View>
             </View>
         );
     }
@@ -314,7 +350,7 @@ const styles = StyleSheet.create({
     abut: {
         flex: 1,
     },
-    chart:{
-        flex:1,
+    chart: {
+        flex: 1,
     }
 });
