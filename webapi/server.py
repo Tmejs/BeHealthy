@@ -44,7 +44,7 @@ class Server(BaseHTTPRequestHandler):
             calories = calories_burned(uphill_in_km=uphill, distance_in_km=distance, time_in_h=time,
                                        activity=json_data['mode'], weight_in_kg=80)
 
-            response = {"calories": calories, "chart": chartURL, "time": time}
+            response = {"calories": calories, "chart": chartURL, "time": time, "distance":distance}
 
         except json.decoder.JSONDecodeError:
             response = "Blad konwersji JSON"

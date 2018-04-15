@@ -65,7 +65,7 @@ class GoogleApiAgent:
 
 
     def getChart(self, chartData, chartDataScaling="-10,200", chartType="lc", chartLabel="Elevation in Meters",
-                 chartSize="500x160", chartColor="orange", **chart_args):
+                 chartSize="500x160", chartColor="blue", **chart_args):
 
         chart_args.update({
             'cht': chartType,

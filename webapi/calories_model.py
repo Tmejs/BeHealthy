@@ -25,3 +25,6 @@ class CaloriesRegressor:
         self.estimator.train(input_fn=tf.estimator.inputs.numpy_input_fn(x={"x": x_train}, y=y_train,
                                                                          num_epochs=8, shuffle=True),
                              steps=y_train.size)
+
+    def predict(self, x_predict):
+        self.estimator.predict(input_fn=tf.estimator.inputs.numpy_input_fn(x={"x": x_predict}))
