@@ -71,8 +71,8 @@ class GoogleApiAgent:
         paths = []
         waypoint = {"latitude": 0.0, 'longitude': 0.0}
         tolerance = 0.4
-        m_in_degrees = 0.00001
-        change_rate_in_m = 50
+        m_in_degrees = 0.000001
+        change_rate_in_m = 100
         origin = json_data['origin']
         destination = json_data['destination']
         calories = json_data['calories']
@@ -148,7 +148,7 @@ class GoogleApiAgent:
 
         return {"calories": calories, "chart": chartURL, "time": time, "distance": distance}
 
-    def getChart(self, chartData, chartDataScaling="-10,100", chartType="lc", chartLabel="Elevation in Meters",
+    def getChart(self, chartData, chartDataScaling="-10,30", chartType="lc", chartLabel="Elevation in Meters",
                  chartSize="500x160", chartColor="blue", **chart_args):
         chart_args.update({
             'cht': chartType,
@@ -157,7 +157,7 @@ class GoogleApiAgent:
             'chco': chartColor,
             'chds': chartDataScaling,
             'chxt': 'x,y',
-            'chxr': '1,-10,100'
+            'chxr': '1,-10,30'
         })
 
         dataString = 't:' + ','.join(str(x) for x in chartData)
