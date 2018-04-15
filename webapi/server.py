@@ -35,6 +35,8 @@ class Server(BaseHTTPRequestHandler):
 
             elif json_data['query'] == 'paths':
                 response = self.googleAgent.get_generated_paths(json_data)
+                print(self.googleAgent.getGoogleMapsUrl(response[0]['path']))
+                print(self.googleAgent.getGoogleMapsUrl(response[1]['path']))
 
         except json.decoder.JSONDecodeError:
             response = "Blad konwersji JSON"

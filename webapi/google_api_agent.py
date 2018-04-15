@@ -108,15 +108,12 @@ class GoogleApiAgent:
             calories_difference = calories - path['calories']
             distance_difference = distance - path['distance']
 
-
-
             n_iteration = 0
             while ((calories_difference / calories < tolerance or distance_difference / distance < tolerance)
                    and n_iteration) < 2:
-
-
                 waypoint['longitude'] += max(abs((1 - path['calories'] / calories)),
-                                             abs((1 - path['distance'] / distance))) * change_rate_in_m * m_in_degrees * mul
+                                             abs((1 - path[
+                                                 'distance'] / distance))) * change_rate_in_m * m_in_degrees * mul
                 waypoint["latitude"] = a * waypoint['longitude'] + b
 
                 path_data['waypoints'] = [waypoint]
@@ -169,3 +166,14 @@ class GoogleApiAgent:
         chartUrl = CHART_BASE_URL + '?' + urllib.parse.urlencode(chart_args)
 
         return chartUrl
+
+    def getGoogleMapsUrl(self, json_data):
+        origin = json_data['origin']
+        destination = json_data['destination']
+        waypoint = json_data['waypoints'][0]
+
+        url = "www.google.com/maps/dir/" + str(origin['latitude']) + "," + str(origin['longitude']) + "/" + \
+              str(waypoint['latitude']) + "," + str(waypoint['longitude']) + "/" + str(destination['latitude']) + ","\
+              + str(destination['longitude']) + "/@15z/data=!4m2!4m1!3e2"
+
+        return url
