@@ -18,7 +18,7 @@ export default class SettingsScreen extends React.Component {
 
 
 
-    static getOsoba() {
+    getOsoba() {
         console.log("getOsoba");
         let osoba= {
             sex: this.state.sex,

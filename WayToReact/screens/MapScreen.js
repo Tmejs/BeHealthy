@@ -29,7 +29,6 @@ export default class MapScreen extends Component {
         endMarkerSet: false,
         distance: 0,
         calories: 0,
-        distance: 0,
         downloaded: false,
         modalVisible: false,
         chartPath: null,
