@@ -151,4 +151,4 @@ def train(num_iteration):
 
 
         total_iterations += num_iteration
-        saver.save(session, 'surface-model')
+        saver.save(session, 'surface-test-model')
