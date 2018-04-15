@@ -1,9 +1,13 @@
+import numpy as np
 import googlemaps
 import json
 import urllib
+from calories_counter import calories_burned
+import copy
 
 ELEVATION_BASE_URL = 'http://maps.google.com/maps/api/elevation/json'
 CHART_BASE_URL = 'http://chart.googleapis.com/chart'
+
 
 class GoogleApiAgent:
     def __init__(self):
@@ -36,7 +40,7 @@ class GoogleApiAgent:
             distance += distance_matrix['rows'][i]['elements'][i]['distance']['value']
             time += distance_matrix['rows'][i]['elements'][i]['duration']['value']
 
-        return distance/1000, time/3600
+        return distance / 1000, time / 3600
 
     def get_elevation(self, json_data, distance):
         locations = [json_data['origin']]
@@ -63,10 +67,92 @@ class GoogleApiAgent:
 
         return uphill, downhill
 
+    def get_generated_paths(self, json_data):
+        paths = []
+        waypoint = {"latitude": 0.0, 'longitude': 0.0}
+        tolerance = 0.4
+        m_in_degrees = 0.00001
+        change_rate_in_m = 50
+        origin = json_data['origin']
+        destination = json_data['destination']
+        calories = json_data['calories']
+        distance = json_data['distance']
 
-    def getChart(self, chartData, chartDataScaling="-10,200", chartType="lc", chartLabel="Elevation in Meters",
+        path_data = {'origin': json_data['origin'],
+                     'destination': json_data['destination'],
+                     'waypoints': None,
+                     'mode': json_data['mode']}
+
+        initial_path = self.get_path_info(path_data)
+
+        ori = [origin['latitude'], origin['longitude']]
+        dest = [destination['latitude'], destination['longitude']]
+        midpoint = [(ori[0] + dest[0]) / 2, (ori[1] + dest[1]) / 2]
+        mul = 1.0
+
+        # znalezenie prostej prosotpadłej
+        y_diff = ori[0] - dest[0]
+        x_diff = ori[1] - dest[1]
+        a = y_diff / x_diff
+        a = -1 / a
+        b = midpoint[0] - a * midpoint[1]
+
+        for i in range(0, 2):
+            val = np.random.uniform(min(ori[1], dest[1]), max(ori[1], dest[1]))
+            waypoint['longitude'] = val
+            waypoint["latitude"] = a * waypoint['longitude'] + b
+
+            path_data['waypoints'] = [waypoint]
+            path = self.get_path_info(path_data)
+
+            calories_difference = calories - path['calories']
+            distance_difference = distance - path['distance']
+
+
+
+            n_iteration = 0
+            while ((calories_difference / calories < tolerance or distance_difference / distance < tolerance)
+                   and n_iteration) < 2:
+
+
+                waypoint['longitude'] += max(abs((1 - path['calories'] / calories)),
+                                             abs((1 - path['distance'] / distance))) * change_rate_in_m * m_in_degrees * mul
+                waypoint["latitude"] = a * waypoint['longitude'] + b
+
+                path_data['waypoints'] = [waypoint]
+                path = self.get_path_info(path_data)
+
+                calories_difference = calories - path['calories']
+                distance_difference = distance - path['distance']
+
+                n_iteration += 1
+
+            mul = mul * -1
+            data_copy = copy.deepcopy(path_data)
+            paths.append({"path": data_copy, "info": path})
+
+        return paths
+
+    def get_path_info(self, json_data):
+        distance, time = self.get_distance_and_time(json_data)
+        elevation = self.get_elevation(json_data, distance)
+
+        elevationArray = []
+
+        for resultset in elevation:
+            elevationArray.append(resultset['elevation'])
+
+        uphill, downhill = self.get_uphill_and_downhill(elevationArray)
+
+        chartURL = self.getChart(chartData=elevationArray)
+
+        calories = calories_burned(uphill_in_km=uphill, distance_in_km=distance, time_in_h=time,
+                                   activity=json_data['mode'], weight_in_kg=80)
+
+        return {"calories": calories, "chart": chartURL, "time": time, "distance": distance}
+
+    def getChart(self, chartData, chartDataScaling="-10,100", chartType="lc", chartLabel="Elevation in Meters",
                  chartSize="500x160", chartColor="blue", **chart_args):
-
         chart_args.update({
             'cht': chartType,
             'chs': chartSize,
@@ -74,7 +160,7 @@ class GoogleApiAgent:
             'chco': chartColor,
             'chds': chartDataScaling,
             'chxt': 'x,y',
-            'chxr': '1,-10,200'
+            'chxr': '1,-10,100'
         })
 
         dataString = 't:' + ','.join(str(x) for x in chartData)
@@ -83,5 +169,3 @@ class GoogleApiAgent:
         chartUrl = CHART_BASE_URL + '?' + urllib.parse.urlencode(chart_args)
 
         return chartUrl
-
-
