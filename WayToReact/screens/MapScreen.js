@@ -4,11 +4,11 @@ import {
     StyleSheet,
     Text,
     Callout,
-    TextInput,
-    View, Button
+    View, Button,Modal,Image
 } from 'react-native';
 import MapView, {PROVIDER_GOOGLE} from 'react-native-maps'; // 0.21.0
 import MapViewDirections from 'react-native-maps-directions';
+import ImagePreview from 'react-native-image-preview';
 
 let id = 0;
 
@@ -23,6 +23,12 @@ export default class MapScreen extends Component {
         startMarkerSet: false,
         endMarkerSet: false,
         distance: 0,
+        calories: 0,
+        distance: 0,
+        downloaded: false,
+        modalVisible: false,
+        chartPath: null,
+        imagePredictVisible:false,
     };
 
 
@@ -99,12 +105,6 @@ export default class MapScreen extends Component {
     }
 
 
-    deleteMarker(marker) {
-
-
-    }
-
-
     onMapPress(e) {
         e.persist();
 
@@ -171,40 +171,13 @@ export default class MapScreen extends Component {
             markers: [],
             startMarkerSet: false,
             endMarkerSet: false,
+            distance: 0,
+            calories: 0,
+            time: 0,
+            downloaded: false,
+            chartPath: null,
         });
     }
-
-
-    // findRoute(){
-    //     let startPoint = this.state.markers[0];
-    //     let endPoint=this.state.markers[1];
-    //
-    //
-    //     .get(
-    //         {
-    //             origin: startPoint.latitude.toString()+","+startPoint.longitude.toString(),
-    //             destination: endPoint.latitude.toString()+","+endPoint.longitude.toString(),
-    //         },
-    //         function(err, data) {
-    //             if (err) return console.log(err);
-    //             console.log(data);
-    //         });
-    //
-    //     // let url = `https://maps.googleapis.com/maps/api/directions/json?origin=${startPoint}&destination=${endPoint}&key=AIzaSyAZJdq8qUnEZu1lNJzCnULREHlEtKcBmUs&mode=walking`;
-    //     //
-    //     //
-    //     // fetch(url)
-    //     //     .then(response => response.json())
-    //     //     .then(responseJson => {
-    //     //
-    //     //         if (responseJson.routes.length) {
-    //     //             this.setState({
-    //     //                 coords: this.decode(responseJson.routes[0].overview_polyline.points) // definition below
-    //     //             });
-    //     //         }
-    //     //     }).catch(e => {console.warn(e)});
-    //
-    // }
 
     getLnGt(marker) {
         return {
@@ -247,6 +220,30 @@ export default class MapScreen extends Component {
                 waypoints: this.getLnGtFromWaypoint(this.state.markers),
                 mode: 'walking'
             })
+        }).then((response) => response.json())
+            .then((responseJson) => {
+                this.setState({
+                    calories: Math.round(responseJson.calories),
+                    time: responseJson.time,
+                    distance: responseJson.distance,
+                    chartPath: responseJson.chart,
+                })
+
+            })
+            .catch((error) => {
+                console.error(error);
+            });
+    }
+
+    markerDragEnd(e) {
+        console.log('markerDragStart');
+        e.persist();
+        console.log(e);
+    }
+
+    onRegionChange(newRegion) {
+        this.setState({
+            mapRegion: newRegion
         });
     }
 
@@ -264,40 +261,47 @@ export default class MapScreen extends Component {
             </MapViewDirections>
         ) : (null);
 
-        let calories;
+
+
+        const chart = this.state.chartPath ? (
+            <ImagePreview visible={this.state.imagePredictVisible} source={this.state.chartPath} close={this.setState({imagePredictVisible :false})} />
+        ) : (null);
 
         if (path != null) {
-             calories=this.getCalories();
+            if (!this.state.downloaded) {
+                this.getCalories();
+                this.setState({
+                    downloaded: true,
+                })
+            }
         }
 
         return (
             <View style={{flex: 1}}>
-                <MapView
-                    style={styles.map}
-                    region={this.state.mapRegion}
-                    provider={PROVIDER_GOOGLE}
-                    showsUserLocation={true}
-                    followUserLocation={true}
-                    onPress={this.onMapPress.bind(this)}>
-                    {this.state.markers.map(marker => (
-                        <MapView.Marker
-                            key={marker.key}
-                            coordinate={marker.coordinate}
-                            draggable={true}
-                        >
-                            <MapView.Callout>
-                                <Text onPress={this.deleteMarker(marker)}>
-                                    Usun marker
-                                </Text>
-                            </MapView.Callout>
-                        </MapView.Marker>
-                    ))}
+                    <MapView
+                        style={styles.map}
+                        region={this.state.mapRegion}
+                        // onRegionChange={this.onRegionChange.bind(this)}
+                        provider={PROVIDER_GOOGLE}
+                        showsUserLocation={true}
+                        onLongPress={this.onMapPress.bind(this)}>
+                        {this.state.markers.map(marker => (
+                            <MapView.Marker
+                                key={marker.key}
+                                coordinate={marker.coordinate}
+                            >
+                            </MapView.Marker>
+                        ))}
 
-                    <Button title='Wyczyść mapę' onPress={this.deleteMarkers.bind(this)}/>
-                    {/*<Button style ="abut"  title='Wyznacz trasę' onPress={} align='bottom'/>*/}
-                    {path}
-                    <Text color='red'>Kalorie: {calories}</Text>
-                </MapView>
+                        <Button title='Wyczyść mapę' onPress={this.deleteMarkers.bind(this)}/>
+                        {/*<Button style ="abut"  title='Wyznacz trasę' onPress={} align='bottom'/>*/}
+                        {path}
+                        <Text color='red'>Kalorie: {this.state.calories}</Text>
+                        <Text color='red'>Czas (minuty): {Math.round(this.state.time * 60)}</Text>
+                        <Text color='red'>Odległośc (metry): {this.state.distance}</Text>
+                        {chart}
+                    </MapView>
+
             </View>
         );
     }
@@ -309,5 +313,8 @@ const styles = StyleSheet.create({
     },
     abut: {
         flex: 1,
+    },
+    chart:{
+        flex:1,
     }
 });

@@ -33,6 +33,7 @@ export default class SettingsScreen extends React.Component {
         ];
 
 
+
         function setSelectedOption(selectedOption) {
             this.setState({
                 sex: selectedOption
@@ -120,10 +121,20 @@ export default class SettingsScreen extends React.Component {
                         placeholderTextColor = "#9a73ef"
                         autoCapitalize = "none"
                         keyboardType='numeric'
-                        keyboardType='numeric'
                         value={this.state.age.toString()}
                         maxLength={3}  //setting limit of input
                     />
+                </View>
+                <View style={{margin: 20}}>
+                    <Text>Wybierz rodzaj treningu</Text>
+                    <SegmentedControls
+                        options={activityOptions}
+                        onSelection={setSelectedTreningOption.bind(this)}
+                        selectedOption={this.state.activity}
+                    />
+                </View>
+                <View>
+                    <RadioButtons/> 
                 </View>
             </ScrollView>
         </View>);
