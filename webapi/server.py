@@ -20,6 +20,7 @@ class Server(BaseHTTPRequestHandler):
         post_data = self.rfile.read(content_length)  # <--- Gets the data itself
         response = "Zwrotka"
         try:
+            print(post_data.decode())
             json_data = json.loads(post_data.decode())
             if json_data['query'] == 'calories':
                 response = str(calories_burned(json_data['uphill'],
