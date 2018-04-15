@@ -21,6 +21,8 @@ export default class MapPredict extends Component {
         startMarkerSet: false,
         endMarkerSet: false,
         distance: 0,
+        calories: 0,
+        distance: 0,
     };
 
     componentDidMount() {
@@ -53,6 +55,9 @@ export default class MapPredict extends Component {
 
 
         render() {
+
+        let getMapsButton
+
             return (
                 <View style={{flex: 1}}>
                     <MapView
@@ -66,20 +71,14 @@ export default class MapPredict extends Component {
                             <MapView.Marker
                                 key={marker.key}
                                 coordinate={marker.coordinate}
-                                draggable={true}
                             >
-                                <MapView.Callout>
-                                    <Text onPress={this.deleteMarker(marker)}>
-                                        Usun marker
-                                    </Text>
-                                </MapView.Callout>
                             </MapView.Marker>
                         ))}
 
                         <Button title='Wyczyść mapę' onPress={this.deleteMarkers.bind(this)}/>
-                        {/*<Button style ="abut"  title='Wyznacz trasę' onPress={} align='bottom'/>*/}
+
                         {path}
-                        <Text color='red'>Kalorie: {calories}</Text>
+                        <Text color='red'>Kalorie: {this.state.calories}</Text>
                     </MapView>
                 </View>
             );

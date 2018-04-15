@@ -9,7 +9,7 @@ import HomeScreen from '../screens/HomeScreen';
 import LinksScreen from '../screens/LinksScreen';
 import SettingsScreen from '../screens/SettingsScreen';
 import MapScreen from "../screens/MapScreen";
-import MapPredict from '../screens/SettingsScreen';
+import MapPredict from '../screens/MapPredict';
 
 
 export default TabNavigator(
@@ -21,7 +21,7 @@ export default TabNavigator(
           screen: MapPredict,
       },
     Settings: {
-      screen: SettingsScreen,
+        screen: SettingsScreen,
     },
   },
   {
