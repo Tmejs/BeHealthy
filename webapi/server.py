@@ -1,8 +1,15 @@
 from http.server import BaseHTTPRequestHandler, HTTPServer
 from calories_counter import calories_burned
+from google_api_agent import GoogleApiAgent
 import json
 
+
 class Server(BaseHTTPRequestHandler):
+    def __init__(self, request, client_address, server):
+        self.googleAgent = GoogleApiAgent()
+        super().__init__(request, client_address, server)
+
+
     def _set_headers(self):
         self.send_response(200)
         self.send_header('Content-type', 'text/html')
@@ -21,20 +28,32 @@ class Server(BaseHTTPRequestHandler):
         response = "Zwrotka"
         try:
             json_data = json.loads(post_data.decode())
-            if json_data['query'] == 'calories':
-                response = str(calories_burned(json_data['uphill'],
-                                               json_data['distance'],
-                                               json_data['time'],
-                                               json_data['activity'],
-                                               json_data['weight']))
-            else:
-                response = "Zle zapytanie"
-            print(json.dumps(json_data))
+            distance = self.googleAgent.get_distance(json_data)
+            elevation = self.googleAgent.get_elevation(json_data, distance)
+
+            elevationArray = []
+
+            for resultset in elevation:
+                elevationArray.append(resultset['elevation'])
+
+            print(elevationArray)
+
+            self.googleAgent.getChart(chartData=elevationArray)
+            # if json_data['query'] == 'calories':
+            #     response = str(calories_burned(json_data['uphill'],
+            #                                    json_data['distance'],
+            #                                    json_data['time'],
+            #                                    json_data['activity'],
+            #                                    json_data['weight']))
+            # else:
+            #     response = "Zle zapytanie"
+            # print(json.dumps(json_data))
         except json.decoder.JSONDecodeError:
             response = "Blad konwersji JSON"
 
+        print(response)
         self._set_headers()
-        self.wfile.write(str.encode(response + '\n'))
+        self.wfile.write(str.encode(str(response) + '\n'))
 
 
 def run(server_class=HTTPServer, handler_class=Server, port=80):
