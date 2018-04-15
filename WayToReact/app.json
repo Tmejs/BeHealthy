@@ -8,9 +8,9 @@
     "platforms": ["ios", "android"],
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/images/waytologo.png",
+    "icon": "./assets/images/waytolog.png",
     "splash": {
-      "image": "./assets/images/waytologo.png",
+      "image": "./assets/images/waytolog.png",
       "resizeMode": "contain",
       "backgroundColor": "#ffffff"
     },

@@ -1,8 +1,9 @@
 import React from 'react';
 import {ExpoConfigView} from '@expo/samples';
-import {Text, View, TouchableWithoutFeedback, ScrollView, TextInput,StyleSheet} from "react-native";
+import {Text, View, AsyncStorage, ScrollView, TextInput, StyleSheet} from "react-native";
 import RadioButtons from 'react-native-radio-buttons'
 import {SegmentedControls} from 'react-native-radio-buttons'
+import '../global.js'
 
 export default class SettingsScreen extends React.Component {
     static navigationOptions = {
@@ -15,6 +16,19 @@ export default class SettingsScreen extends React.Component {
         activity: null,
     };
 
+
+
+    static getOsoba() {
+        console.log("getOsoba");
+        let osoba= {
+            sex: this.state.sex,
+            weight: this.state.weight,
+            age: this.state.age,
+            activity: this.state.activity,
+        };
+    }
+
+
     setSex(gender) {
         this.setState({
             sex: {gender},
@@ -22,6 +36,8 @@ export default class SettingsScreen extends React.Component {
     }
 
     render() {
+
+        global.osoba = this.getOsoba();
         const options = [
             "Mezczyzna",
             "Kobieta"
@@ -31,7 +47,6 @@ export default class SettingsScreen extends React.Component {
             "Bieg",
             "Spacer"
         ];
-
 
 
         function setSelectedOption(selectedOption) {
@@ -46,12 +61,12 @@ export default class SettingsScreen extends React.Component {
             });
         }
 
-        function onNumericWeightTextChanged(text){
+        function onNumericWeightTextChanged(text) {
             let newText = '';
             let numbers = '0123456789';
 
-            for (var i=0; i < text.length; i++) {
-                if(numbers.indexOf(text[i]) > -1 ) {
+            for (var i = 0; i < text.length; i++) {
+                if (numbers.indexOf(text[i]) > -1) {
                     newText = newText + text[i];
                 }
                 else {
@@ -59,15 +74,15 @@ export default class SettingsScreen extends React.Component {
                     alert("please enter numbers only");
                 }
             }
-            this.setState({ weight: newText });
+            this.setState({weight: newText});
         }
 
-        function onNumericAgeTextChanged(text){
+        function onNumericAgeTextChanged(text) {
             let newText = '';
             let numbers = '0123456789';
 
-            for (var i=0; i < text.length; i++) {
-                if(numbers.indexOf(text[i]) > -1 ) {
+            for (var i = 0; i < text.length; i++) {
+                if (numbers.indexOf(text[i]) > -1) {
                     newText = newText + text[i];
                 }
                 else {
@@ -75,7 +90,7 @@ export default class SettingsScreen extends React.Component {
                     alert("please enter numbers only");
                 }
             }
-            this.setState({ weight: newText });
+            this.setState({weight: newText});
         }
 
         return (<View>
@@ -88,7 +103,6 @@ export default class SettingsScreen extends React.Component {
                         onSelection={setSelectedOption.bind(this)}
                         selectedOption={this.state.sex}
                     />
-
                 </View>
 
                 <View style={{margin: 20}}>
@@ -102,11 +116,11 @@ export default class SettingsScreen extends React.Component {
                 <View style={{margin: 20}}>
                     <Text>Wiek</Text>
                     <TextInput
-                        style = {styles.input}
-                        underlineColorAndroid = "transparent"
-                        placeholder = "Waga"
-                        placeholderTextColor = "#9a73ef"
-                        autoCapitalize = "none"
+                        style={styles.input}
+                        underlineColorAndroid="transparent"
+                        placeholder="Waga"
+                        placeholderTextColor="#9a73ef"
+                        autoCapitalize="none"
                         keyboardType='numeric'
                         value={this.state.weight.toString()}
                         maxLength={3}  //setting limit of input
@@ -115,11 +129,11 @@ export default class SettingsScreen extends React.Component {
                 <View style={{margin: 20}}>
                     <Text>Waga</Text>
                     <TextInput
-                        style = {styles.input}
-                        underlineColorAndroid = "transparent"
-                        placeholder = "Wiek"
-                        placeholderTextColor = "#9a73ef"
-                        autoCapitalize = "none"
+                        style={styles.input}
+                        underlineColorAndroid="transparent"
+                        placeholder="Wiek"
+                        placeholderTextColor="#9a73ef"
+                        autoCapitalize="none"
                         keyboardType='numeric'
                         value={this.state.age.toString()}
                         maxLength={3}  //setting limit of input
@@ -134,7 +148,7 @@ export default class SettingsScreen extends React.Component {
                     />
                 </View>
                 <View>
-                    <RadioButtons/> 
+
                 </View>
             </ScrollView>
         </View>);
@@ -157,7 +171,7 @@ const styles = StyleSheet.create({
         margin: 15,
         height: 40,
     },
-    submitButtonText:{
+    submitButtonText: {
         color: 'white'
     }
 })
