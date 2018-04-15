@@ -29,7 +29,7 @@ class Server(BaseHTTPRequestHandler):
         try:
             print(post_data.decode())
             json_data = json.loads(post_data.decode())
-            distance = self.googleAgent.get_distance(json_data)
+            distance, time = self.googleAgent.get_distance_and_time(json_data)
             elevation = self.googleAgent.get_elevation(json_data, distance)
 
             elevationArray = []
@@ -37,24 +37,21 @@ class Server(BaseHTTPRequestHandler):
             for resultset in elevation:
                 elevationArray.append(resultset['elevation'])
 
-            print(elevationArray)
+            uphill, downhill = self.googleAgent.get_uphill_and_downhill(elevationArray)
 
-            self.googleAgent.getChart(chartData=elevationArray)
-            # if json_data['query'] == 'calories':
-            #     response = str(calories_burned(json_data['uphill'],
-            #                                    json_data['distance'],
-            #                                    json_data['time'],
-            #                                    json_data['activity'],
-            #                                    json_data['weight']))
-            # else:
-            #     response = "Zle zapytanie"
-            # print(json.dumps(json_data))
+            chartURL = self.googleAgent.getChart(chartData=elevationArray)
+
+            calories = calories_burned(uphill_in_km=uphill, distance_in_km=distance, time_in_h=time,
+                                       activity=json_data['mode'], weight_in_kg=80)
+
+            response = {"calories": calories, "chart": chartURL, "time": time}
+
         except json.decoder.JSONDecodeError:
             response = "Blad konwersji JSON"
 
         print(response)
         self._set_headers()
-        self.wfile.write(str.encode(str(response) + '\n'))
+        self.wfile.write(str.encode(json.dumps(response) + '\n'))
 
 
 def run(server_class=HTTPServer, handler_class=Server, port=80):
